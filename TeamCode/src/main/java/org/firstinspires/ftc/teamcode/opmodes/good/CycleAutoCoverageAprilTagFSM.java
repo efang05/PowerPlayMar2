@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
+import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
 import org.firstinspires.ftc.teamcode.subsystems.SleeveDetectorAprilTag;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
@@ -15,7 +16,7 @@ import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 @Autonomous
 public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
     Pose2d START_POSE = new Pose2d(38,-62,Math.toRadians(270));
-    Pose2d Preload_POSE = new Pose2d(38,-11, Math.toRadians(270));
+    Pose2d Preload_POSE = new Pose2d(38,-48, Math.toRadians(270));
     Pose2d Score_POSE = new Pose2d(38.5,-12, Math.toRadians(0));
     Pose2d Intake_POSE = new Pose2d(58, -12, Math.toRadians(0));
     Pose2d FinalIntake_POSE = new Pose2d(59, -12, Math.toRadians(0));
@@ -48,8 +49,10 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
     public double scorearm = 0.61;
     private double preloadarm = 0.61;
 
-    public double scoreangle = -493;
-    public double preloadangle = -160.5;
+    public double mid_scoreangle = -493;
+    public double high_scoreangle = 493;
+    public double low_scoreangle = -360;
+    public double preloadangle = -330;
     public double intakeangle = 0;
 
     private double prev_time = System.currentTimeMillis();
@@ -101,7 +104,7 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
         // Intake_POSE -> Score_POSE
         TrajectorySequence[] cycle = new TrajectorySequence[5];
         for(int cnt = 0; cnt < 5; cnt++) {
-                cycle[cnt] = build_cycle(Intake_POSE, cnt);
+            cycle[cnt] = build_cycle(Intake_POSE, cnt);
         }
         // Score_POSE -> Parking
         TrajectorySequence leftPark = robot.drive.trajectorySequenceBuilder(Score_POSE)
@@ -249,9 +252,9 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
         return intake;
     }
 
-    private TrajectorySequence build_intake(Pose2d start_pose, int count) {
-        Pose2d position;
-        if (count >= 3) {
+    private TrajectorySequence build_intake(Pose2d start_pose, int num) {
+        Pose2d position = new Pose2d();
+        if (num >= 3) {
             position = FinalIntake_POSE;
         } else {
             position = Intake_POSE;
@@ -270,7 +273,22 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
         return intake;
     }
 
-    private TrajectorySequence build_cycle(Pose2d start_pose, int count) {
+    private TrajectorySequence build_cycle(Pose2d start_pose, int num) {
+        double scoreangle = 0;
+        Pose2d position = new Pose2d();
+
+        if (num == 0) {
+            scoreangle = low_scoreangle;
+            position = Intake_POSE;
+        } else if (num == 1) {
+            scoreangle = mid_scoreangle;
+            position = Score_POSE;
+        } else if (num >= 2) {
+            scoreangle = high_scoreangle;
+            position = Score_POSE;
+        }
+
+        double finalScoreangle = scoreangle;
         TrajectorySequence cycle = robot.drive.trajectorySequenceBuilder(start_pose)
                 .addTemporalMarker(() -> {
                     robot.lift.setTargetHeight(liftPickUp);
@@ -283,10 +301,10 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
                     robot.lift.setHorizontalPosition(hzslidesin);
                 })
                 .setVelConstraint(robot.drive.getVelocityConstraint(40, Math.toRadians(180), DriveConstants.TRACK_WIDTH))
-                .lineToLinearHeading(Score_POSE)
+                .lineToLinearHeading(position)
                 .UNSTABLE_addTemporalMarkerOffset(-1.1, () -> {
                     robot.turret.MAX_POWER = outtakingturret;
-                    robot.turret.setTargetAngle(scoreangle);
+                    robot.turret.setTargetAngle(finalScoreangle);
                     robot.intake.setAligner(scorealigner);
                 })
                 .UNSTABLE_addTemporalMarkerOffset(-0.2, () -> {
@@ -316,20 +334,20 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
         return cycle;
     }
 
-    private void setCycleIntakeHeight(int count) {
-        if (count == 0) {
+    private void setCycleIntakeHeight(int num) {
+        if (num == 0) {
             robot.lift.setTargetHeight(71);
             robot.intake.centerArm();
-        } else if (count == 1) {
+        } else if (num == 1) {
             robot.lift.setTargetHeight(51);
             robot.intake.centerArm();
-        } else if (count == 2) {
+        } else if (num == 2) {
             robot.lift.setTargetHeight(25);
             robot.intake.centerArm();
-        } else if (count == 3) {
+        } else if (num == 3) {
             robot.lift.setTargetHeight(20);
             robot.intake.setArmPos(0.52);
-        } else if (count == 4) {
+        } else if (num == 4) {
             robot.lift.setTargetHeight(20);
             robot.intake.setArmPos(0.52);
         }

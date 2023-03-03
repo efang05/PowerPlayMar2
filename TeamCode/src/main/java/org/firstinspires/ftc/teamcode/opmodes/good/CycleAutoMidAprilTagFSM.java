@@ -13,12 +13,12 @@ import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 
 @Config
 @Autonomous
-public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
+public class CycleAutoMidAprilTagFSM extends LinearOpMode {
     Pose2d START_POSE = new Pose2d(38,-62,Math.toRadians(270));
     Pose2d Preload_POSE = new Pose2d(38,-11, Math.toRadians(270));
     Pose2d Score_POSE = new Pose2d(38.5,-12, Math.toRadians(0));
-    Pose2d Intake_POSE = new Pose2d(58, -12, Math.toRadians(0));
-    Pose2d FinalIntake_POSE = new Pose2d(59, -12, Math.toRadians(0));
+    Pose2d Intake_POSE = new Pose2d(57.75, -12, Math.toRadians(0));
+    Pose2d FinalIntake_POSE = new Pose2d(58.75, -12, Math.toRadians(0));
     Robot robot;
     SleeveDetectorAprilTag detector = new SleeveDetectorAprilTag();
     int parkingPos = 100;
@@ -26,7 +26,7 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
 
     public double liftPickUp = 1000;
     public double liftHigh = 1700;
-    public double liftMid = 1212;
+    public double liftMid = 1204;
     public double liftLow = 350;
     public double liftGround = 0;
     public double liftIdle = 200;
@@ -43,7 +43,7 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
     //change after tuning horizontal slides
     public double hzslidesout = 0.969;
     public double hzslidesin = 0.3;
-    public double hzslidesmid = 0.800;
+    public double hzslidesmid = 0.600;
 
     public double scorearm = 0.61;
     private double preloadarm = 0.61;
@@ -54,8 +54,7 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
 
     private double prev_time = System.currentTimeMillis();
 
-    private double coneStack = 160;
-    private double coneSubtract = 24;
+    private double coneStack = 197;
     private double preloadhorizontal = 1.0;
 
     private double intakingturret = 0.8;
@@ -106,16 +105,28 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
         // Score_POSE -> Parking
         TrajectorySequence leftPark = robot.drive.trajectorySequenceBuilder(Score_POSE)
                 .setVelConstraint(robot.drive.getVelocityConstraint(20, Math.toRadians(180), DriveConstants.TRACK_WIDTH))
-                .lineToLinearHeading(new Pose2d(8,-12, Math.toRadians(0)))
+                .addTemporalMarker(() -> {
+                    robot.lift.setTargetHeight(0);
+                    robot.intake.setAligner(0);
+                })
+                .lineToLinearHeading(new Pose2d(11.5,-12, Math.toRadians(0)))
                 .build();
 
         TrajectorySequence midPark = robot.drive.trajectorySequenceBuilder(Score_POSE)
                 .setVelConstraint(robot.drive.getVelocityConstraint(20, Math.toRadians(180), DriveConstants.TRACK_WIDTH))
+                .addTemporalMarker(() -> {
+                    robot.lift.setTargetHeight(0);
+                    robot.intake.setAligner(0);
+                })
                 .lineToLinearHeading(new Pose2d(36, -12, Math.toRadians(0)))
                 .build();
 
         TrajectorySequence rightPark = robot.drive.trajectorySequenceBuilder(Score_POSE)
                 .setVelConstraint(robot.drive.getVelocityConstraint(20, Math.toRadians(180), DriveConstants.TRACK_WIDTH))
+                .addTemporalMarker(() -> {
+                    robot.lift.setTargetHeight(0);
+                    robot.intake.setAligner(0);
+                })
                 .lineToLinearHeading(new Pose2d(64,-12, Math.toRadians(0)))
                 .build();
         // ==================================================================================
@@ -250,33 +261,42 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
     }
 
     private TrajectorySequence build_intake(Pose2d start_pose, int count) {
-        Pose2d position;
         if (count >= 3) {
-            position = FinalIntake_POSE;
+            TrajectorySequence intake = robot.drive.trajectorySequenceBuilder(start_pose) //replace with start_pose for normal
+                    .setVelConstraint(robot.drive.getVelocityConstraint(40, Math.toRadians(180), DriveConstants.TRACK_WIDTH))
+                    .lineToLinearHeading(FinalIntake_POSE)
+                    .UNSTABLE_addTemporalMarkerOffset(-0.5, () -> {
+                        robot.lift.setHorizontalPosition(hzslidesout);
+                    })
+                    .UNSTABLE_addTemporalMarkerOffset(1.5, () -> {
+                        robot.intake.closeClaw();
+                    })
+                    .build();
+            return intake;
         } else {
-            position = Intake_POSE;
+            TrajectorySequence intake = robot.drive.trajectorySequenceBuilder(start_pose) //replace with start_pose for normal
+                    .setVelConstraint(robot.drive.getVelocityConstraint(40, Math.toRadians(180), DriveConstants.TRACK_WIDTH))
+                    .lineToLinearHeading(Intake_POSE)
+                    .UNSTABLE_addTemporalMarkerOffset(-0.5, () -> {
+                        robot.lift.setHorizontalPosition(hzslidesout);
+                    })
+                    .UNSTABLE_addTemporalMarkerOffset(1.5, () -> {
+                        robot.intake.closeClaw();
+                    })
+                    .build();
+            return intake;
         }
-        TrajectorySequence intake = robot.drive.trajectorySequenceBuilder(start_pose) //replace with start_pose for normal
-                .setVelConstraint(robot.drive.getVelocityConstraint(40, Math.toRadians(180), DriveConstants.TRACK_WIDTH))
-                .lineToLinearHeading(position)
-                .UNSTABLE_addTemporalMarkerOffset(-0.5, () -> {
-                    robot.lift.setHorizontalPosition(hzslidesout);
-                })
-                .UNSTABLE_addTemporalMarkerOffset(1.5, () -> {
-                    robot.intake.closeClaw();
-                })
-                .build();
-
-        return intake;
     }
 
     private TrajectorySequence build_cycle(Pose2d start_pose, int count) {
         TrajectorySequence cycle = robot.drive.trajectorySequenceBuilder(start_pose)
                 .addTemporalMarker(() -> {
                     robot.lift.setTargetHeight(liftPickUp);
+                })
+                .UNSTABLE_addTemporalMarkerOffset(-0.18, () -> {
                     robot.lift.setHorizontalPosition(hzslidesmid);
                 })
-                .waitSeconds(0.3)
+                .waitSeconds(0.2)
                 .addTemporalMarker(() -> {
                     robot.lift.setTargetHeight(liftMid);
                     robot.intake.setArmPos(scorearm);
@@ -292,7 +312,7 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
                 .UNSTABLE_addTemporalMarkerOffset(-0.2, () -> {
                     robot.lift.setHorizontalPosition(hzslidesout);
                 })
-                .waitSeconds(0.35)
+                .waitSeconds(0.31)
                 .addTemporalMarker(() -> {
                     robot.lift.setTargetHeight(liftMid-dropvalue);
                 })
@@ -300,12 +320,12 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
                 .addTemporalMarker(() -> {
                     robot.intake.fullyOpenClaw();
                 })
-                .waitSeconds(0.1)
+                .waitSeconds(0.05)
                 .addTemporalMarker(() -> {
                     robot.lift.setHorizontalPosition(hzslidesin);
                     robot.intake.centerArm();
                 })
-                .waitSeconds(0.1)
+                .waitSeconds(0.05)
                 .addTemporalMarker(() -> {
                     robot.turret.MAX_POWER = intakingturret;
                     robot.intake.setAligner(0);
@@ -318,20 +338,20 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
 
     private void setCycleIntakeHeight(int count) {
         if (count == 0) {
-            robot.lift.setTargetHeight(71);
+            robot.lift.setTargetHeight(120);
             robot.intake.centerArm();
         } else if (count == 1) {
-            robot.lift.setTargetHeight(51);
+            robot.lift.setTargetHeight(59);
             robot.intake.centerArm();
         } else if (count == 2) {
-            robot.lift.setTargetHeight(25);
+            robot.lift.setTargetHeight(28);
             robot.intake.centerArm();
         } else if (count == 3) {
-            robot.lift.setTargetHeight(20);
-            robot.intake.setArmPos(0.52);
+            robot.lift.setTargetHeight(8);
+            robot.intake.setArmPos(0.54);
         } else if (count == 4) {
             robot.lift.setTargetHeight(20);
-            robot.intake.setArmPos(0.52);
+            robot.intake.setArmPos(0.54);
         }
     }
 

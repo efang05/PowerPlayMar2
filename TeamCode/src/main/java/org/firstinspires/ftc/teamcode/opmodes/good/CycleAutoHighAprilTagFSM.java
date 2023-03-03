@@ -7,14 +7,13 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
-import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
 import org.firstinspires.ftc.teamcode.subsystems.SleeveDetectorAprilTag;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 
 @Config
 @Autonomous
-public class CycleAutoMidAprilTagFSM extends LinearOpMode {
+public class CycleAutoHighAprilTagFSM extends LinearOpMode {
     Pose2d START_POSE = new Pose2d(38,-62,Math.toRadians(270));
     Pose2d Preload_POSE = new Pose2d(38,-11, Math.toRadians(270));
     Pose2d Score_POSE = new Pose2d(38.5,-12, Math.toRadians(0));
@@ -26,8 +25,8 @@ public class CycleAutoMidAprilTagFSM extends LinearOpMode {
     private ElapsedTime timer;
 
     public double liftPickUp = 1000;
-    public double liftHigh = 1212;
-    public double liftMid = 900;
+    public double liftHigh = 1700;
+    public double liftMid = 1212;
     public double liftLow = 350;
     public double liftGround = 0;
     public double liftIdle = 200;
@@ -49,7 +48,7 @@ public class CycleAutoMidAprilTagFSM extends LinearOpMode {
     public double scorearm = 0.61;
     private double preloadarm = 0.61;
 
-    public double scoreangle = -493;
+    public double scoreangle = 493;
     public double preloadangle = -160.5;
     public double intakeangle = 0;
 
@@ -198,7 +197,7 @@ public class CycleAutoMidAprilTagFSM extends LinearOpMode {
                 .lineToLinearHeading(Preload_POSE)
                 .UNSTABLE_addTemporalMarkerOffset(-4, () -> {
                     robot.lift.setHorizontalPosition(hzslidesin);
-                    robot.lift.setTargetHeight(liftHigh);
+                    robot.lift.setTargetHeight(liftMid);
                     robot.intake.setArmPos(preloadarm);
                     robot.turret.setTargetAngle(preloadangle);
                 })
@@ -210,7 +209,7 @@ public class CycleAutoMidAprilTagFSM extends LinearOpMode {
                 })
                 .waitSeconds(0.5)
                 .addTemporalMarker(() -> {
-                    robot.lift.setTargetHeight(liftHigh-dropvalue);
+                    robot.lift.setTargetHeight(liftMid-dropvalue);
                 })
                 .waitSeconds(0.1)
                 .addTemporalMarker(() -> {
