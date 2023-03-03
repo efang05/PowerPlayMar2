@@ -7,13 +7,14 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
+import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
 import org.firstinspires.ftc.teamcode.subsystems.SleeveDetectorAprilTag;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 
 @Config
 @Autonomous
-public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
+public class CycleAutoMidAprilTagFSM extends LinearOpMode {
     Pose2d START_POSE = new Pose2d(38,-62,Math.toRadians(270));
     Pose2d Preload_POSE = new Pose2d(38,-11, Math.toRadians(270));
     Pose2d Score_POSE = new Pose2d(38.5,-12, Math.toRadians(0));
@@ -25,8 +26,8 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
     private ElapsedTime timer;
 
     public double liftPickUp = 1000;
-    public double liftHigh = 1700;
-    public double liftMid = 1212;
+    public double liftHigh = 1212;
+    public double liftMid = 900;
     public double liftLow = 350;
     public double liftGround = 0;
     public double liftIdle = 200;
@@ -197,7 +198,7 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
                 .lineToLinearHeading(Preload_POSE)
                 .UNSTABLE_addTemporalMarkerOffset(-4, () -> {
                     robot.lift.setHorizontalPosition(hzslidesin);
-                    robot.lift.setTargetHeight(liftMid);
+                    robot.lift.setTargetHeight(liftHigh);
                     robot.intake.setArmPos(preloadarm);
                     robot.turret.setTargetAngle(preloadangle);
                 })
@@ -209,7 +210,7 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
                 })
                 .waitSeconds(0.5)
                 .addTemporalMarker(() -> {
-                    robot.lift.setTargetHeight(liftMid-dropvalue);
+                    robot.lift.setTargetHeight(liftHigh-dropvalue);
                 })
                 .waitSeconds(0.1)
                 .addTemporalMarker(() -> {
@@ -278,7 +279,7 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
                 })
                 .waitSeconds(0.3)
                 .addTemporalMarker(() -> {
-                    robot.lift.setTargetHeight(liftMid);
+                    robot.lift.setTargetHeight(liftHigh);
                     robot.intake.setArmPos(scorearm);
                     robot.lift.setHorizontalPosition(hzslidesin);
                 })
@@ -294,7 +295,7 @@ public class CycleAutoCoverageAprilTagFSM extends LinearOpMode {
                 })
                 .waitSeconds(0.35)
                 .addTemporalMarker(() -> {
-                    robot.lift.setTargetHeight(liftMid-dropvalue);
+                    robot.lift.setTargetHeight(liftHigh-dropvalue);
                 })
                 .waitSeconds(0.1)
                 .addTemporalMarker(() -> {
